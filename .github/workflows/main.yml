@@ -24,7 +24,11 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run script
-      run: python main.py  
+      run: python main.py
+      env:
+          CALENDAR_API_KEY: ${{ secrets.CALENDAR_API_KEY }}
+          CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+          BIRTHDAY_URL: ${{ secrets.BIRTHDAY_URL }}
       
     - name: Delete xlsx file
       run: rm birthdays.xlsx
