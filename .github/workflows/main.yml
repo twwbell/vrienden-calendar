@@ -29,12 +29,6 @@ jobs:
           CALENDAR_API_KEY: ${{ secrets.CALENDAR_API_KEY }}
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
           BIRTHDAY_URL: ${{ secrets.BIRTHDAY_URL }}
-      
-    - name: Delete xlsx file
-      run: rm birthdays.xlsx
-
-    - name: Stage deleted file
-      run: git rm birthdays.xlsx
 
     - name: Commit and push changes
       run: |
