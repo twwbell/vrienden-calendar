@@ -33,10 +33,12 @@ jobs:
     - name: Delete xlsx file
       run: rm birthdays.xlsx
 
+    - name: Stage deleted file
+      run: git rm birthdays.xlsx
+
     - name: Commit and push changes
       run: |
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
-        git add .
         git commit -m "Update TXT files"
         git push
