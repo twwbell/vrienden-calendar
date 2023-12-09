@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 from dateutil import parser
-
+import os
 
 # Function to authenticate google calendar
 def authenticate_google_calendar(api_key):
@@ -110,12 +110,12 @@ def print_birthday_messages(title, messages):
 
 def main():
     # Calendar prep
-    calendar_api_key = 'AIzaSyCxrmEU1OzFn_w5zlTEallTm3qkkBLKtwE'
+    calendar_api_key = os.environ.get('CALENDAR_API_KEY')
     calendar_service = authenticate_google_calendar(calendar_api_key)
-    calendar_id = '62285cfabedb318c0ea8e8019f7bfa4d4ff5f7f40feca0efb001712afa507c12@group.calendar.google.com'
+    calendar_id = os.environ.get('CALENDAR_ID')
 
     # Birthday prep
-    url = 'https://docs.google.com/spreadsheets/d/1mlvfjHxvrUxrJr9l_xwirhugh9b7q3QbF82u-AcJUzs/export?format=xlsx'
+    url = os.environ.get('BIRTHDAY_URL')
     output = 'birthdays.xlsx'
     download_xlsx(url, output)
     birthdays = read_xlsx('birthdays.xlsx', sheet_name=0)
