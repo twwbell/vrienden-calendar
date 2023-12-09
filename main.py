@@ -28,7 +28,6 @@ def generate_birthday_messages(birthdays):
 
     birthdays["age"] = cur_year - birthdays["birth_year"]
     todays_events = birthdays.loc[(birthdays['birth_month'] == cur_month) & (birthdays['birth_date'] == cur_day)]
-    print(todays_events)
 
     message_list = []
 
@@ -94,19 +93,34 @@ def get_modified_events(calendar_service, calendar_id):
     return modified_events
 
 def print_calendar_events(title, events):
-    print(f"\n{title}:")
+    print(f"\n*{title}:*")
     for event in events:
         summary = event['summary']
         creator_email = event.get('creator', {}).get('email', 'N/A')
         date = event.get('start', {}).get('dateTime', 'N/A').split('T')[0]
         time = event.get('start', {}).get('dateTime', 'N/A').split('T')[1][:5]
 
-        print(f"{summary} ({date}, {time}, {creator_email})")
+        print(f"\n_{summary} ({date}, {time}, {creator_email})_")
 
 def print_birthday_messages(title, messages):
-    print(f"\n{title}:")
+    print(f"\n*{title}:*")
     for message in messages:
-        print(message['summary'])
+        print(f"\n_{message['summary']}_")
+
+def write_calendar_events(file, title, events):
+    file.write(f"*{title}:*")
+    for event in events:
+        summary = event['summary']
+        creator_email = event.get('creator', {}).get('email', 'N/A')
+        date = event.get('start', {}).get('dateTime', 'N/A').split('T')[0]
+        time = event.get('start', {}).get('dateTime', 'N/A').split('T')[1][:5]
+
+        file.write(f"\n_{summary} ({date}, {time}, {creator_email})_")
+
+def write_birthday_messages(file, title, messages):
+    file.write(f"*{title}:*")
+    for message in messages:
+        file.write(f"\n_{message['summary']}_")
 
 def main():
     # Calendar prep
@@ -125,10 +139,18 @@ def main():
     modified_events = get_modified_events(calendar_service, calendar_id)
     birthday_messages = generate_birthday_messages(birthdays)
 
-    # Print the events
-    print_calendar_events("Vandaag op het programma", today_events)
-    print_calendar_events("Toegevoegd/gewijzigd afgelopen 24 uur in de vriendenagenda", modified_events)
-    print_birthday_messages("Botolas' verjaardagen", birthday_messages)
+    # Print the events if they exist
+    with open("today_events.txt", "w") as file:
+        if today_events:
+            write_calendar_events(file, "Vandaag op het programma", today_events)
+
+    with open("modified_events.txt", "w") as file:
+        if modified_events:
+            write_calendar_events(file, "Toegevoegd/gewijzigd afgelopen 24 uur in de vriendenagenda", modified_events)
+
+    with open("birthday_messages.txt", "w") as file:
+        if birthday_messages:
+            write_birthday_messages(file, "Botolas' verjaardagen", birthday_messages)
 
 if __name__ == "__main__":
     main()
