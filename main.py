@@ -108,14 +108,27 @@ def print_birthday_messages(title, messages):
         print(f"\n_{message['summary']}_")
 
 def write_calendar_events(file, title, events):
-    file.write(f"*{title}:*")
+    file.write(f"\n*{title}:*\n")
     for event in events:
         summary = event['summary']
         creator_email = event.get('creator', {}).get('email', 'N/A')
-        date = event.get('start', {}).get('dateTime', 'N/A').split('T')[0]
-        time = event.get('start', {}).get('dateTime', 'N/A').split('T')[1][:5]
 
-        file.write(f"\n_{summary} ({date}, {time}, {creator_email})_")
+        start = event.get('start', {})
+        end = event.get('end', {})
+        is_all_day = 'date' in start and 'date' in end
+
+        if is_all_day:
+            start_date = start.get('date', 'N/A')
+            end_date = end.get('date', 'N/A')
+            time_str = f"{start_date} t/m {end_date}"
+        elif 'dateTime' in start:
+            date = start.get('dateTime', 'N/A').split('T')[0]
+            time = start.get('dateTime', 'N/A').split('T')[1][:5]
+            time_str = f"{date}, {time}"
+        else:
+            time_str = 'N/A'
+
+        file.write(f"\n_{summary} ({time_str}, {creator_email})_\n")
 
 def write_birthday_messages(file, title, messages):
     file.write(f"*{title}:*")
@@ -125,32 +138,49 @@ def write_birthday_messages(file, title, messages):
 def main():
     # Calendar prep
     calendar_api_key = os.environ.get('CALENDAR_API_KEY')
-    calendar_service = authenticate_google_calendar(calendar_api_key)
-    calendar_id = os.environ.get('CALENDAR_ID')
 
-    # Birthday prep
-    url = os.environ.get('BIRTHDAY_URL')
-    output = 'birthdays.xlsx'
-    download_xlsx(url, output)
-    birthdays = read_xlsx('birthdays.xlsx', sheet_name=0)
+    try:
+        calendar_service = authenticate_google_calendar(calendar_api_key)
+        calendar_id = os.environ.get('CALENDAR_ID')
 
-    # Collect the events
-    today_events = get_today_events(calendar_service, calendar_id)
-    modified_events = get_modified_events(calendar_service, calendar_id)
-    birthday_messages = generate_birthday_messages(birthdays)
+        # Birthday prep
+        url = os.environ.get('BIRTHDAY_URL')
+        output = 'birthdays.xlsx'
 
-    # Print the events if they exist
-    with open("today_events.txt", "w") as file:
-        if today_events:
-            write_calendar_events(file, "Vandaag op het programma", today_events)
+        try:
+            download_xlsx(url, output)
+            birthdays = read_xlsx('birthdays.xlsx', sheet_name=0)
+            birthday_messages = generate_birthday_messages(birthdays)
 
-    with open("modified_events.txt", "w") as file:
-        if modified_events:
-            write_calendar_events(file, "Toegevoegd/gewijzigd afgelopen 24 uur in de vriendenagenda", modified_events)
+            # Print the birthday messages if they exist
+            with open("birthday_messages.txt", "w") as file:
+                if birthday_messages:
+                    write_birthday_messages(file, "Botolas' verjaardagen", birthday_messages)
 
-    with open("birthday_messages.txt", "w") as file:
-        if birthday_messages:
-            write_birthday_messages(file, "Botolas' verjaardagen", birthday_messages)
+        except Exception as birthday_error:
+            print(f"Error processing birthdays: {str(birthday_error)}")
+
+        # Collect the events
+        try:
+            today_events = get_today_events(calendar_service, calendar_id)
+            modified_events = get_modified_events(calendar_service, calendar_id)
+
+            # Print the events if they exist
+            with open("today_events.txt", "w") as file:
+                if today_events:
+                    write_calendar_events(file, "Vandaag op het programma", today_events)
+
+            with open("modified_events.txt", "w") as file:
+                if modified_events:
+                    write_calendar_events(file, "Toegevoegd/gewijzigd afgelopen 24 uur in de vriendenagenda", modified_events)
+
+        except Exception as events_error:
+            print(f"Error processing events: {str(events_error)}")
+
+    except Exception as auth_error:
+        print(f"Error authenticating Google Calendar API: {str(auth_error)}")
+
+    print("All seems to be done")
 
 if __name__ == "__main__":
     main()
