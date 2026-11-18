@@ -1,0 +1,498 @@
+{
+  "id": "vriendenCalDaily",
+  "name": "vrienden-calendar_Daily-Message",
+  "active": false,
+  "nodes": [
+    {
+      "id": "de845384-d662-4dba-ad19-1dfcfbf29c27",
+      "name": "Every day 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "66d9c4ff-e58d-4a23-94f0-32eb0e75aa1f",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{}",
+        "options": {}
+      }
+    },
+    {
+      "id": "49497a33-799f-4d33-a974-5532ae9854f0",
+      "name": "Today events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($('Config').first().json.calendarId) }}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $today.toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $today.plus({ days: 1 }).toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "",
+          "name": "googleApi"
+        }
+      }
+    },
+    {
+      "id": "6b60a07d-f6e5-4db7-a9ae-c456221b3f2a",
+      "name": "Changed events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($('Config').first().json.calendarId) }}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "updatedMin",
+              "value": "={{ $now.minus({ hours: 24 }).toISO() }}"
+            },
+            {
+              "name": "timeMin",
+              "value": "={{ $now.minus({ days: 1 }).toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "",
+          "name": "googleApi"
+        }
+      }
+    },
+    {
+      "id": "e7a44999-23f6-458d-bff3-76442a0e8c76",
+      "name": "Birthday sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.birthdaySheetId }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.birthdaySheetGid }}"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "",
+          "name": "googleApi"
+        }
+      }
+    },
+    {
+      "id": "a3f1c2d4-5b6e-4f70-8a91-b2c3d4e5f607",
+      "name": "Recent messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "url": "=https://api.github.com/gists/{{ $('Config').first().json.gistId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "githubApi"
+        }
+      }
+    },
+    {
+      "id": "2a9dd0b4-a00f-4fdf-8699-4e8a22e8615d",
+      "name": "Facts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Turns the raw calendar events and sheet rows into the facts the agent writes about.\nconst since = $now.minus({ hours: 24 });\n\n// Calendar and sheet are written by people, so their text is data for the agent, not\n// instructions. Keep each field short and strip angle brackets so nothing can close the\n// <feiten> tag the prompt wraps it in.\nconst clip = (value, max) => {\n  if (value === undefined || value === null) return null;\n  const text = String(value).replace(/[<>]/g, '').trim();\n  if (!text) return null;\n  return text.length > max ? text.slice(0, max) + '…' : text;\n};\n\n// The Calendar API answers with one item holding all events in `items`.\nconst events = (node) =>\n  $(node).all().flatMap((item) => item.json.items ?? []).filter((e) => e.id && e.status !== 'cancelled');\n\nconst describe = (e) => {\n  const allDay = Boolean(e.start?.date);\n  return {\n    title: clip(e.summary, 120) || '(zonder titel)',\n    allDay,\n    start: allDay ? e.start.date : e.start?.dateTime,\n    // Google's all-day end date is exclusive; the agent gets the last day itself.\n    end: allDay ? DateTime.fromISO(e.end.date).minus({ days: 1 }).toISODate() : e.end?.dateTime,\n    location: clip(e.location, 120),\n    createdBy: clip(e.creator?.email, 80),\n  };\n};\n\nconst todayEvents = events('Today events').map(describe);\nconst changedEvents = events('Changed events').map((e) => ({\n  ...describe(e),\n  change: DateTime.fromISO(e.created) >= since ? 'nieuw' : 'gewijzigd',\n}));\n\nconst birthdays = $('Birthday sheet').all()\n  .map((item) => item.json)\n  .filter((r) => Number(r.birth_month) === $today.month && Number(r.birth_date) === $today.day)\n  .map((r) => {\n    const year = Number(r.birth_year);\n    return {\n      name: clip(r.name, 60),\n      age: year > 0 ? $today.year - year : null,\n      congrats_to: clip(r.congrats_to, 60),\n      custom_message: clip(r.custom_message, 300),\n    };\n  });\n\n// Botolas' memory: the last messages, kept in a second file of the gist so the\n// agent can avoid repeating greetings and jokes. A missing or broken file means no memory.\nconst HISTORY_FILE = 'botolas-history.json';\nlet recentMessages = [];\ntry {\n  const content = $('Recent messages').first().json.files?.[HISTORY_FILE]?.content;\n  const parsed = content ? JSON.parse(content) : [];\n  if (Array.isArray(parsed)) {\n    recentMessages = parsed\n      .filter((m) => m && typeof m.message === 'string' && m.date !== $today.toISODate())\n      .slice(-7);\n  }\n} catch (error) {\n  recentMessages = [];\n}\n\nreturn [{\n  json: {\n    facts: { today: $today.toISODate(), todayEvents, changedEvents, birthdays },\n    recentMessages,\n    historyFile: HISTORY_FILE,\n    hasNews: todayEvents.length + changedEvents.length + birthdays.length > 0,\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "12b094fa-c791-43b6-815b-505aafc5fe24",
+      "name": "Anything to say?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1e2a73b2-4698-40d5-b713-723155aec4bb",
+              "leftValue": "={{ $json.hasNews }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b34992d0-61e8-4e01-9bee-d939f4fec233",
+      "name": "Write message",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1780,
+        -120
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=<feiten>\n{{ JSON.stringify($json.facts, null, 2) }}\n</feiten>\n\n<eerdere_berichten>\n{{ $json.recentMessages.length ? $json.recentMessages.map((m) => '--- ' + m.date + ' ---\\n' + m.message).join('\\n\\n') : '(nog geen)' }}\n</eerdere_berichten>\n\nSchrijf nu het bericht van vandaag.",
+        "options": {
+          "systemMessage": "(filled from n8n/prompts/system.md by push.mjs)"
+        }
+      }
+    },
+    {
+      "id": "fff1ce62-ebc9-4aae-8388-8a58b54cd2bc",
+      "name": "Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1780,
+        100
+      ],
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "temperature": 0.9
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "googlePalmApi"
+        }
+      }
+    },
+    {
+      "id": "cf6a4dce-e2ce-4136-a014-f4b4d02a261d",
+      "name": "Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        -120
+      ],
+      "parameters": {
+        "jsCode": "// Last guardrail before the gist: a message that lost Botolas' sign-off or grew far too\n// long probably came from injected instructions in the calendar or sheet. Throwing leaves\n// the gist on yesterday's date, so the Shortcut sends nothing and the error workflow mails.\nconst message = String($json.output ?? '').trim();\nconst lastLine = message.split('\\n').pop().replace(/[*_~\\s]/g, '').toLowerCase();\n\nif (!lastLine.includes('jullie') || !lastLine.includes('botolas')) {\n  throw new Error('Message does not end with the Botolas sign-off:\\n\\n' + message);\n}\nif (message.length > 2500) {\n  throw new Error('Message is ' + message.length + ' characters, more than the 2500 allowed:\\n\\n' + message);\n}\n\nreturn [{ json: { date: $today.toISODate(), message } }];\n"
+      }
+    },
+    {
+      "id": "5394ce2e-a46b-427c-8acd-6f07e2e2a62c",
+      "name": "No message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2120,
+        120
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ date: $today.toISODate(), message: \"\" }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "c172c8f1-c2e2-41cf-9c9b-3470856fe890",
+      "name": "Write gist",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2360,
+        0
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.github.com/gists/{{ $('Config').first().json.gistId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const facts = $('Facts').first().json;\n  const files = {\n    [$('Config').first().json.gistFile]: { content: JSON.stringify({ date: $json.date, message: $json.message }, null, 2) },\n  };\n  if ($json.message) {\n    const history = [...facts.recentMessages, { date: $json.date, message: $json.message }].slice(-7);\n    files[facts.historyFile] = { content: JSON.stringify(history, null, 2) };\n  }\n  return JSON.stringify({ files });\n})() }}",
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "githubApi"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every day 06:00": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Today events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today events": {
+      "main": [
+        [
+          {
+            "node": "Changed events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Changed events": {
+      "main": [
+        [
+          {
+            "node": "Birthday sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Birthday sheet": {
+      "main": [
+        [
+          {
+            "node": "Recent messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facts": {
+      "main": [
+        [
+          {
+            "node": "Anything to say?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to say?": {
+      "main": [
+        [
+          {
+            "node": "Write message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write message",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write message": {
+      "main": [
+        [
+          {
+            "node": "Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message": {
+      "main": [
+        [
+          {
+            "node": "Write gist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No message": {
+      "main": [
+        [
+          {
+            "node": "Write gist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recent messages": {
+      "main": [
+        [
+          {
+            "node": "Facts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Amsterdam",
+    "errorWorkflow": "vriendenCalError",
+    "saveManualExecutions": true
+  }
+}
