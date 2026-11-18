@@ -7,8 +7,7 @@
   "errorMailFrom": "n8n@example.com",
   "errorMailTo": "you@example.com",
   "credentials": {
-    "googleCalendarOAuth2Api": "<n8n credential id>",
-    "googleSheetsOAuth2Api": "<n8n credential id>",
+    "googleApi": "<n8n credential id>",
     "googlePalmApi": "<n8n credential id>",
     "githubApi": "<n8n credential id>",
     "smtp": "<n8n credential id>"

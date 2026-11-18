@@ -4,7 +4,7 @@
   "active": false,
   "nodes": [
     {
-      "id": "246459d4-29d4-4e05-8521-c91d06afec59",
+      "id": "d4530ba1-d9d9-4264-a9a4-a8e8e29e59de",
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -15,7 +15,7 @@
       "parameters": {}
     },
     {
-      "id": "8ec46344-1859-4c82-b576-ce141720af38",
+      "id": "77959b5b-bab1-488b-b3d5-418fba0427a0",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -30,7 +30,7 @@
       }
     },
     {
-      "id": "427b00f3-d12e-4bc2-b05e-b1e60f77d8b3",
+      "id": "85bfaa26-b31d-41d7-919b-8222feaeaa58",
       "name": "Send error mail",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,

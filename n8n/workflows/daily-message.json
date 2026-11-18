@@ -4,7 +4,7 @@
   "active": false,
   "nodes": [
     {
-      "id": "346ced9f-f19d-4f09-8b2d-b61a12f14efc",
+      "id": "de845384-d662-4dba-ad19-1dfcfbf29c27",
       "name": "Every day 06:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -23,7 +23,7 @@
       }
     },
     {
-      "id": "add411e9-668b-4d97-8c07-c95d0f6f4c19",
+      "id": "66d9c4ff-e58d-4a23-94f0-32eb0e75aa1f",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -38,68 +38,102 @@
       }
     },
     {
-      "id": "bd623894-762d-4dbb-9d66-f9a6af0b9568",
+      "id": "49497a33-799f-4d33-a974-5532ae9854f0",
       "name": "Today events",
-      "type": "n8n-nodes-base.googleCalendar",
-      "typeVersion": 1.3,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         440,
         0
       ],
-      "alwaysOutputData": true,
       "parameters": {
-        "operation": "getAll",
-        "calendar": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $('Config').first().json.calendarId }}"
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($('Config').first().json.calendarId) }}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ $today.toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $today.plus({ days: 1 }).toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
         },
-        "returnAll": true,
-        "timeMin": "={{ $today.toISO() }}",
-        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
         "options": {}
       },
       "credentials": {
-        "googleCalendarOAuth2Api": {
+        "googleApi": {
           "id": "",
-          "name": "googleCalendarOAuth2Api"
+          "name": "googleApi"
         }
       }
     },
     {
-      "id": "f279f4ea-8f52-4952-8959-5128fe6233e0",
+      "id": "6b60a07d-f6e5-4db7-a9ae-c456221b3f2a",
       "name": "Changed events",
-      "type": "n8n-nodes-base.googleCalendar",
-      "typeVersion": 1.3,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         660,
         0
       ],
-      "alwaysOutputData": true,
       "executeOnce": true,
       "parameters": {
-        "operation": "getAll",
-        "calendar": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $('Config').first().json.calendarId }}"
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($('Config').first().json.calendarId) }}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "updatedMin",
+              "value": "={{ $now.minus({ hours: 24 }).toISO() }}"
+            },
+            {
+              "name": "timeMin",
+              "value": "={{ $now.minus({ days: 1 }).toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "maxResults",
+              "value": "2500"
+            }
+          ]
         },
-        "returnAll": true,
-        "timeMin": "={{ $now.minus({ days: 1 }).toISO() }}",
-        "timeMax": "={{ $now.plus({ years: 2 }).toISO() }}",
-        "options": {
-          "updatedMin": "={{ $now.minus({ hours: 24 }).toISO() }}"
-        }
+        "options": {}
       },
       "credentials": {
-        "googleCalendarOAuth2Api": {
+        "googleApi": {
           "id": "",
-          "name": "googleCalendarOAuth2Api"
+          "name": "googleApi"
         }
       }
     },
     {
-      "id": "73584e57-1d49-4560-a87e-b8cb974d7f8a",
+      "id": "e7a44999-23f6-458d-bff3-76442a0e8c76",
       "name": "Birthday sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
@@ -110,7 +144,7 @@
       "alwaysOutputData": true,
       "executeOnce": true,
       "parameters": {
-        "authentication": "oAuth2",
+        "authentication": "serviceAccount",
         "resource": "sheet",
         "operation": "read",
         "documentId": {
@@ -126,14 +160,14 @@
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": {
+        "googleApi": {
           "id": "",
-          "name": "googleSheetsOAuth2Api"
+          "name": "googleApi"
         }
       }
     },
     {
-      "id": "bdcd392d-161a-4157-a9a3-bef477698187",
+      "id": "2a9dd0b4-a00f-4fdf-8699-4e8a22e8615d",
       "name": "Facts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -142,11 +176,11 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Turns the raw calendar events and sheet rows into the facts the agent writes about.\nconst since = $now.minus({ hours: 24 });\n\nconst events = (node) =>\n  $(node).all().map((item) => item.json).filter((e) => e.id && e.status !== 'cancelled');\n\nconst describe = (e) => {\n  const allDay = Boolean(e.start?.date);\n  return {\n    title: e.summary || '(zonder titel)',\n    allDay,\n    start: allDay ? e.start.date : e.start?.dateTime,\n    // Google's all-day end date is exclusive; the agent gets the last day itself.\n    end: allDay ? DateTime.fromISO(e.end.date).minus({ days: 1 }).toISODate() : e.end?.dateTime,\n    location: e.location || null,\n    createdBy: e.creator?.email || null,\n  };\n};\n\nconst todayEvents = events('Today events').map(describe);\nconst changedEvents = events('Changed events').map((e) => ({\n  ...describe(e),\n  change: DateTime.fromISO(e.created) >= since ? 'nieuw' : 'gewijzigd',\n}));\n\nconst birthdays = $('Birthday sheet').all()\n  .map((item) => item.json)\n  .filter((r) => Number(r.birth_month) === $today.month && Number(r.birth_date) === $today.day)\n  .map((r) => {\n    const year = Number(r.birth_year);\n    return {\n      name: r.name,\n      age: year > 0 ? $today.year - year : null,\n      congrats_to: r.congrats_to,\n      custom_message: String(r.custom_message ?? '').trim() || null,\n    };\n  });\n\nreturn [{\n  json: {\n    today: $today.toISODate(),\n    todayEvents,\n    changedEvents,\n    birthdays,\n    hasNews: todayEvents.length + changedEvents.length + birthdays.length > 0,\n  },\n}];\n"
+        "jsCode": "// Turns the raw calendar events and sheet rows into the facts the agent writes about.\nconst since = $now.minus({ hours: 24 });\n\n// The Calendar API answers with one item holding all events in `items`.\nconst events = (node) =>\n  $(node).all().flatMap((item) => item.json.items ?? []).filter((e) => e.id && e.status !== 'cancelled');\n\nconst describe = (e) => {\n  const allDay = Boolean(e.start?.date);\n  return {\n    title: e.summary || '(zonder titel)',\n    allDay,\n    start: allDay ? e.start.date : e.start?.dateTime,\n    // Google's all-day end date is exclusive; the agent gets the last day itself.\n    end: allDay ? DateTime.fromISO(e.end.date).minus({ days: 1 }).toISODate() : e.end?.dateTime,\n    location: e.location || null,\n    createdBy: e.creator?.email || null,\n  };\n};\n\nconst todayEvents = events('Today events').map(describe);\nconst changedEvents = events('Changed events').map((e) => ({\n  ...describe(e),\n  change: DateTime.fromISO(e.created) >= since ? 'nieuw' : 'gewijzigd',\n}));\n\nconst birthdays = $('Birthday sheet').all()\n  .map((item) => item.json)\n  .filter((r) => Number(r.birth_month) === $today.month && Number(r.birth_date) === $today.day)\n  .map((r) => {\n    const year = Number(r.birth_year);\n    return {\n      name: r.name,\n      age: year > 0 ? $today.year - year : null,\n      congrats_to: r.congrats_to,\n      custom_message: String(r.custom_message ?? '').trim() || null,\n    };\n  });\n\nreturn [{\n  json: {\n    today: $today.toISODate(),\n    todayEvents,\n    changedEvents,\n    birthdays,\n    hasNews: todayEvents.length + changedEvents.length + birthdays.length > 0,\n  },\n}];\n"
       }
     },
     {
-      "id": "abe8d4b1-9a97-47d6-9586-bbf97d48e2ae",
+      "id": "12b094fa-c791-43b6-815b-505aafc5fe24",
       "name": "Anything to say?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -164,7 +198,7 @@
           },
           "conditions": [
             {
-              "id": "187c7bcf-ab05-4c5f-aced-1786129b52b0",
+              "id": "1e2a73b2-4698-40d5-b713-723155aec4bb",
               "leftValue": "={{ $json.hasNews }}",
               "rightValue": "",
               "operator": {
@@ -180,7 +214,7 @@
       }
     },
     {
-      "id": "09c1ea7b-29bb-4c2b-9ea9-d112a24a2488",
+      "id": "b34992d0-61e8-4e01-9bee-d939f4fec233",
       "name": "Write message",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
@@ -197,7 +231,7 @@
       }
     },
     {
-      "id": "f3074ecc-5d15-44e3-8889-ad05e7169862",
+      "id": "fff1ce62-ebc9-4aae-8388-8a58b54cd2bc",
       "name": "Gemini",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.2,
@@ -219,7 +253,7 @@
       }
     },
     {
-      "id": "91de93da-2210-4e34-916d-e471ca248e1e",
+      "id": "cf6a4dce-e2ce-4136-a014-f4b4d02a261d",
       "name": "Message",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -234,7 +268,7 @@
       }
     },
     {
-      "id": "5c25a06e-d77d-4bf3-8664-3bd78cc0a458",
+      "id": "5394ce2e-a46b-427c-8acd-6f07e2e2a62c",
       "name": "No message",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -249,7 +283,7 @@
       }
     },
     {
-      "id": "d06d5fbe-bb81-42e6-9b90-f6cec722a1d9",
+      "id": "c172c8f1-c2e2-41cf-9c9b-3470856fe890",
       "name": "Write gist",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,

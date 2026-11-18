@@ -16,7 +16,7 @@ export const MAIN_WORKFLOW_ID = 'vriendenCalDaily'
 export const CONFIG_KEYS = ['calendarId', 'birthdaySheetId', 'birthdaySheetGid', 'gistId', 'gistFile', 'errorMailFrom', 'errorMailTo']
 
 /** Credential types the workflows use; config.credentials maps each to an n8n credential ID. */
-export const CREDENTIAL_TYPES = ['googleCalendarOAuth2Api', 'googleSheetsOAuth2Api', 'googlePalmApi', 'githubApi', 'smtp']
+export const CREDENTIAL_TYPES = ['googleApi', 'googlePalmApi', 'githubApi', 'smtp']
 
 /** Marker in the files where push puts the system prompt and pull takes it out again. */
 export const PROMPT_PLACEHOLDER = '(filled from n8n/prompts/system.md by push.mjs)'
