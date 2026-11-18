@@ -1,0 +1,85 @@
+{
+  "id": "vriendenCalError",
+  "name": "vrienden-calendar_Error-Mail",
+  "active": false,
+  "nodes": [
+    {
+      "id": "246459d4-29d4-4e05-8521-c91d06afec59",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "8ec46344-1859-4c82-b576-ce141720af38",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{}",
+        "options": {}
+      }
+    },
+    {
+      "id": "427b00f3-d12e-4bc2-b05e-b1e60f77d8b3",
+      "name": "Send error mail",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "={{ $json.errorMailFrom }}",
+        "toEmail": "={{ $json.errorMailTo }}",
+        "subject": "=vrienden-calendar mislukt ({{ $today.toISODate() }})",
+        "emailFormat": "text",
+        "text": "=De dagelijkse vrienden-calendar run is mislukt. De gist houdt de datum van de vorige run, dus de Shortcut stuurt vandaag niets.\n\nNode: {{ $('Error Trigger').first().json.execution.lastNodeExecuted }}\nFout: {{ $('Error Trigger').first().json.execution.error.message }}\nExecution: {{ $('Error Trigger').first().json.execution.url }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "smtp"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Send error mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Amsterdam"
+  }
+}

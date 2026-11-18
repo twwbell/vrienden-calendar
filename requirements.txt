@@ -1,6 +1,0 @@
-google-api-python-client
-gdown
-pandas
-openpyxl
-pytz
-python-dateutil

@@ -1,0 +1,16 @@
+{
+  "calendarId": "<id>@group.calendar.google.com",
+  "birthdaySheetId": "<id from the Google Sheets URL>",
+  "birthdaySheetGid": "0",
+  "gistId": "<id of the secret gist>",
+  "gistFile": "vrienden-calendar.json",
+  "errorMailFrom": "n8n@example.com",
+  "errorMailTo": "you@example.com",
+  "credentials": {
+    "googleCalendarOAuth2Api": "<n8n credential id>",
+    "googleSheetsOAuth2Api": "<n8n credential id>",
+    "googlePalmApi": "<n8n credential id>",
+    "githubApi": "<n8n credential id>",
+    "smtp": "<n8n credential id>"
+  }
+}
