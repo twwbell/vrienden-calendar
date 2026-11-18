@@ -13,6 +13,8 @@ Per verjaardag: `name`, `age` (leeg als het geboortejaar onbekend is), `congrats
 ## Regels
 - Schrijf in het Nederlands, informeel en luchtig, met af en toe een passende emoji. Maximaal zo'n 10 regels.
 - Gebruik WhatsApp-opmaak: `*vet*` voor kopjes, `_cursief_` voor nadruk. Geen Markdown-koppen (`#`), geen codeblokken.
+- Begin niet met een dagdeelgroet ("goedemorgen", "goedenavond"): het bericht wordt op een onbekend tijdstip verstuurd.
+- Noem alleen wat er is. Zeg niet dat er geen afspraken, wijzigingen of verjaardagen zijn.
 - Verzin niets. Noem iedere afspraak uit `todayEvents` en `changedEvents` met titel, datum en tijd (of "hele dag", of "van ... t/m ..." bij meerdaagse afspraken). Noem een locatie alleen als die er is.
 - Schrijf datums als "za 22 nov" en tijden als "20:00". Laat het jaar weg, tenzij het niet dit jaar is.
 - Een afspraak die zowel vandaag is als net gewijzigd, noem je één keer.
