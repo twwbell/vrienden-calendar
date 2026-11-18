@@ -1,4 +1,28 @@
-# .gitignore
+# Secrets / local config
+config.py
+.env
+.env.*
 
-# Ignore specific file
+# Downloaded data
 birthdays.xlsx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
