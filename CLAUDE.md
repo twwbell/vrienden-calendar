@@ -30,12 +30,14 @@ There are no dependencies, tests or build: the scripts use only Node built-ins a
 
   `pull.mjs` (`forFiles`) strips them out again, so a prompt edited in the n8n editor is lost on pull: edit `prompts/system.md`. When you add a config key or credential type, add it to `CONFIG_KEYS` / `CREDENTIAL_TYPES` in `lib.mjs` and to `example.json`.
 - **Workflow and node names are referenced by name.** Expressions use `$('Config')`, `$('Today events')` and so on, and the `Facts` Code node reads the three fetch nodes by name. Renaming a node means updating those references.
-- **Daily flow:** `Config` → `Today events` → `Changed events` → `Birthday sheet` → `Facts` → IF → agent (`Write message`, Gemini model) or `No message` → `Write gist`.
+- **Daily flow:** `Config` → `Today events` → `Changed events` → `Birthday sheet` → `Recent messages` → `Facts` → IF → agent (`Write message`, Gemini model) → `Message` (output check), or `No message` → `Write gist`.
+  - **Memory:** `Recent messages` reads the gist. `Facts` passes the last 7 messages from the gist file `botolas-history.json` to the agent, so it doesn't repeat itself. `Write gist` appends today's message to that file, but only on days that have a message.
+  - **Prompt injection:** calendar and sheet text is untrusted. `Facts` clips each field and strips `<>`, the agent gets it inside `<feiten>` tags, and the `Message` Code node throws (gist stays stale, error mail) when the message lacks the "Jullie maat Botolas" sign-off or exceeds 2500 characters.
   - `Today events` and `Changed events` are HTTP Request nodes that call the Calendar API directly, because n8n's Google Calendar node only supports OAuth, not a service account. The `googleApi` credential therefore needs "Set up for use in HTTP Request node" with the `calendar.readonly` scope. Each returns one item with the events in `items`.
   - The fetch nodes run in sequence with `executeOnce` (and `alwaysOutputData` on the sheet). `Facts` drops empty placeholders (no `id`).
   - `Facts` turns all-day end dates (exclusive in Google) into the inclusive last day.
 - **The empty message is a feature.** `Write gist` always writes, also `""`, so a stale message is never re-sent. On failure the gist keeps the old date (the Shortcut stays silent) and `vrienden-calendar_Error-Mail` (the daily workflow's `errorWorkflow`) mails the owner.
-- **Message rules live in the prompt**, not in code: Dutch, WhatsApp markup (`*bold*`, `_italic_`), never invent facts, and the birthday rules (`custom_message` literally > `congrats_to = ALL` song > "Gefeliciteerd X met Y", plus the age when known).
+- **Message rules live in the prompt**, not in code: the Botolas persona (opening line "🤖 Botolas zegt:", varying good-morning greeting, useless fact or joke, a bridge to the news, bold headings per category, sign-off "Jullie maat Botolas"), Dutch, WhatsApp markup (`*bold*`, `_italic_`), and never inventing events. Birthdays are written freely: `custom_message` is a hint, not text to copy.
 - **Fixed workflow ids** (`vriendenCalDaily`, `vriendenCalError`), so import overwrites instead of duplicating. Import deactivates. `push.mjs` re-publishes the daily one with `n8n publish:workflow`, and only when config has no empty values.
 
 The owner's iPhone side is documented in `docs/iphone-shortcut.md`.
